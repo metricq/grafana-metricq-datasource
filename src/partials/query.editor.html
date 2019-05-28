@@ -1,0 +1,47 @@
+<query-editor-row query-ctrl="ctrl" can-collapse="false" has-text-edit-mode="true">
+    <div class="gf-form-group">
+        <div class="gf-form-inline">
+            <div ng-if="!ctrl.target.rawQuery">
+                <div class="gf-form">
+                    <select class="gf-form-input" ng-model="ctrl.target.function"
+                            ng-options="f as f for f in ctrl.getAvailableFunctions()"
+                            ng-change="ctrl.onChangeInternal()"></select>
+                    <label class="gf-form-label">(</label>
+                </div>
+            </div>
+            <div class="gf-form" ng-if="ctrl.target.rawQuery">
+                <textarea class="gf-form-input" rows="5" ng-model="ctrl.target.target" spellcheck="false"
+                          ng-blur="ctrl.onChangeInternal()"/>
+            </div>
+
+            <div ng-if="!ctrl.target.rawQuery">
+                <div class="gf-form">
+                    <gf-form-dropdown model="ctrl.target.targetMetric"
+                                      allow-custom="true"
+                                      lookup-text="true"
+                                      get-options="ctrl.getOptions($query)"
+                                      on-change="ctrl.onChangeInternal()">
+                    </gf-form-dropdown>
+                </div>
+            </div>
+            <div
+                    ng-show="ctrl.getArgumentsForActiveFunction().length > 0 && !ctrl.target.rawQuery"
+                    ng-repeat="item in ctrl.getArgumentsForActiveFunction()"
+            >
+                <div class="gf-form">
+                    <label class="gf-form-label">,</label>
+                    <input type="text" class="gf-form-input" ng-model="ctrl.target.functionArguments[$index]"
+                           data-placement="right" spellcheck='false' placeholder="{{item}}"
+                           ng-blur="ctrl.onChangeInternal()">
+                </div>
+            </div>
+            <div class="gf-form gf-form--grow">
+                <div ng-if="!ctrl.target.rawQuery">
+                    <label class="gf-form-label">)</label>
+                </div>
+                <div class="gf-form-label gf-form-label--grow"></div>
+            </div>
+        </div>
+    </div>
+    </div>
+</query-editor-row>
