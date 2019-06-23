@@ -7,7 +7,14 @@ import './css/query_editor.css!';
 export class MetricQQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
-  available_functions: { [id: string] : string[]; } = {};
+  available_aggregates : string[] = ['min', 'max', 'avg', 'sma', 'count'];
+  available_alias_types:string[] = ['', 'by value', 'by metric', 'by description', 'by metric and description'];
+
+  dummydashboard = {
+    on: (str, fn, val) => {}
+  };
+
+  selected_aggregates = {};
 
   defaults = {
   };
@@ -18,28 +25,29 @@ export class MetricQQueryCtrl extends QueryCtrl {
 
     _.defaultsDeep(this.target, this.defaults);
 
-    this.available_functions[''] = [];
-    this.available_functions['alias'] = ['alias'];
-    this.available_functions['aliasByMetric'] = [];
-    this.available_functions['aliasByDescription'] = [];
-    this.available_functions['aliasByMetricAndDescription'] = [];
-    this.available_functions['movingAverageWithAlias'] = ['alias', 'sma window in ms'];
-    this.target.target = this.target.target || '';
+    this.target.aliasType = this.target.aliasType || '';
+    this.target.aliasValue = this.target.aliasValue || '';
     this.target.targetMetric = this.target.targetMetric || 'select metric';
-    this.target.function = this.target.function || '';
-    this.target.functionArguments = this.target.functionArguments || [];
-  }
+    this.target.aggregates = this.target.aggregates || [];
+    this.target.smaWindow = this.target.smaWindow || 0;
 
-  getAvailableFunctions() {
-    let avail_funcs : string[] = [];
-    for (let key in this.available_functions) {
-      avail_funcs.push(key);
+    let options = [];
+
+    for (let aggregate of this.available_aggregates) {
+      console.log(aggregate)
+      options.push({ text: aggregate, value: aggregate, selected: this.target.aggregates.includes(aggregate) })
     }
-    return avail_funcs;
+
+    this.selected_aggregates = {
+      multi: true,
+      current: {},
+      useTags: false,
+      options: options
+    };
   }
 
-  getArgumentsForActiveFunction() {
-    return this.available_functions[this.target.function] || [];
+  getAvailableAliasTypes() {
+    return this.available_alias_types;
   }
 
   getOptions(query) {
@@ -47,25 +55,10 @@ export class MetricQQueryCtrl extends QueryCtrl {
   }
 
   onChangeInternal() {
-    if (!this.target.rawQuery) {
-      this.target.target = this.buildTargetString();
-    }
     this.panelCtrl.refresh(); // Asks the panel to refresh data.
   }
 
-  buildTargetString() {
-    let numArgs = this.getArgumentsForActiveFunction().length;
-    let targetString: string = this.target.function;
-    if (targetString !== '') {
-      targetString = targetString.concat('(');
-    }
-    targetString = targetString.concat(this.target.targetMetric);
-    for (let _i = 0; _i < numArgs; _i++) {
-      targetString = targetString.concat(",", this.target.functionArguments[_i] as string);
-    }
-    if (this.target.function !== '') {
-      targetString = targetString.concat(')');
-    }
-    return targetString;
+  aggregatesUpdated(variable) {
+    console.log(variable);
   }
 }

@@ -3,15 +3,17 @@ import { QueryCtrl } from 'app/plugins/sdk';
 export declare class MetricQQueryCtrl extends QueryCtrl {
     private templateSrv;
     static templateUrl: string;
-    available_functions: {
-        [id: string]: string[];
+    available_aggregates: string[];
+    available_alias_types: string[];
+    dummydashboard: {
+        on: (str: any, fn: any, val: any) => void;
     };
+    selected_aggregates: {};
     defaults: {};
     /** @ngInject **/
     constructor($scope: any, $injector: any, templateSrv: any);
-    getAvailableFunctions(): string[];
-    getArgumentsForActiveFunction(): string[];
+    getAvailableAliasTypes(): string[];
     getOptions(query: any): any;
     onChangeInternal(): void;
-    buildTargetString(): string;
+    aggregatesUpdated(variable: any): void;
 }

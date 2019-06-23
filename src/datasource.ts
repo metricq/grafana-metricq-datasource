@@ -90,15 +90,18 @@ export default class MetricQDatasource {
   buildQueryParameters(options) {
     //remove placeholder targets
     options.targets = _.filter(options.targets, target => {
-      return target.target !== 'select metric';
+      return target.targetMetric !== 'select metric';
     });
 
     var targets = _.map(options.targets, target => {
       return {
-        target: this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
+        alias_type: target.aliasType,
+        alias_value: this.templateSrv.replace(target.aliasValue, options.scopedVars, 'regex'),
+        target_metric: this.templateSrv.replace(target.targetMetric, options.scopedVars, 'regex'),
+        aggregates: target.aggregates,
+        sma_window: target.smaWindow,
         refId: target.refId,
-        hide: target.hide,
-        type: 'timeserie'
+        hide: target.hide
       };
     });
 

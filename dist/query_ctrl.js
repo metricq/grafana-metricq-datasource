@@ -23,53 +23,43 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                 function MetricQQueryCtrl($scope, $injector, templateSrv) {
                     _super.call(this, $scope, $injector);
                     this.templateSrv = templateSrv;
-                    this.available_functions = {};
+                    this.available_aggregates = ['min', 'max', 'avg', 'sma', 'count'];
+                    this.available_alias_types = ['', 'by value', 'by metric', 'by description', 'by metric and description'];
+                    this.dummydashboard = {
+                        on: function (str, fn, val) { }
+                    };
+                    this.selected_aggregates = {};
                     this.defaults = {};
                     lodash_1.default.defaultsDeep(this.target, this.defaults);
-                    this.available_functions[''] = [];
-                    this.available_functions['alias'] = ['alias'];
-                    this.available_functions['aliasByMetric'] = [];
-                    this.available_functions['aliasByDescription'] = [];
-                    this.available_functions['aliasByMetricAndDescription'] = [];
-                    this.available_functions['movingAverageWithAlias'] = ['alias', 'sma window in ms'];
-                    this.target.target = this.target.target || '';
+                    this.target.aliasType = this.target.aliasType || '';
+                    this.target.aliasValue = this.target.aliasValue || '';
                     this.target.targetMetric = this.target.targetMetric || 'select metric';
-                    this.target.function = this.target.function || '';
-                    this.target.functionArguments = this.target.functionArguments || [];
-                }
-                MetricQQueryCtrl.prototype.getAvailableFunctions = function () {
-                    var avail_funcs = [];
-                    for (var key in this.available_functions) {
-                        avail_funcs.push(key);
+                    this.target.aggregates = this.target.aggregates || [];
+                    this.target.smaWindow = this.target.smaWindow || 0;
+                    var options = [];
+                    for (var _i = 0, _a = this.available_aggregates; _i < _a.length; _i++) {
+                        var aggregate = _a[_i];
+                        console.log(aggregate);
+                        options.push({ text: aggregate, value: aggregate, selected: this.target.aggregates.includes(aggregate) });
                     }
-                    return avail_funcs;
-                };
-                MetricQQueryCtrl.prototype.getArgumentsForActiveFunction = function () {
-                    return this.available_functions[this.target.function] || [];
+                    this.selected_aggregates = {
+                        multi: true,
+                        current: {},
+                        useTags: false,
+                        options: options
+                    };
+                }
+                MetricQQueryCtrl.prototype.getAvailableAliasTypes = function () {
+                    return this.available_alias_types;
                 };
                 MetricQQueryCtrl.prototype.getOptions = function (query) {
                     return this.datasource.metricFindQuery(query || '');
                 };
                 MetricQQueryCtrl.prototype.onChangeInternal = function () {
-                    if (!this.target.rawQuery) {
-                        this.target.target = this.buildTargetString();
-                    }
                     this.panelCtrl.refresh(); // Asks the panel to refresh data.
                 };
-                MetricQQueryCtrl.prototype.buildTargetString = function () {
-                    var numArgs = this.getArgumentsForActiveFunction().length;
-                    var targetString = this.target.function;
-                    if (targetString !== '') {
-                        targetString = targetString.concat('(');
-                    }
-                    targetString = targetString.concat(this.target.targetMetric);
-                    for (var _i = 0; _i < numArgs; _i++) {
-                        targetString = targetString.concat(",", this.target.functionArguments[_i]);
-                    }
-                    if (this.target.function !== '') {
-                        targetString = targetString.concat(')');
-                    }
-                    return targetString;
+                MetricQQueryCtrl.prototype.aggregatesUpdated = function (variable) {
+                    console.log(variable);
                 };
                 MetricQQueryCtrl.templateUrl = 'partials/query.editor.html';
                 return MetricQQueryCtrl;

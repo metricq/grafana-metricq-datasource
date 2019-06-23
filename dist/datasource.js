@@ -84,14 +84,17 @@ System.register(['lodash'], function(exports_1) {
                     var _this = this;
                     //remove placeholder targets
                     options.targets = lodash_1.default.filter(options.targets, function (target) {
-                        return target.target !== 'select metric';
+                        return target.targetMetric !== 'select metric';
                     });
                     var targets = lodash_1.default.map(options.targets, function (target) {
                         return {
-                            target: _this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
+                            alias_type: target.aliasType,
+                            alias_value: _this.templateSrv.replace(target.aliasValue, options.scopedVars, 'regex'),
+                            target_metric: _this.templateSrv.replace(target.targetMetric, options.scopedVars, 'regex'),
+                            aggregates: target.aggregates,
+                            sma_window: target.smaWindow,
                             refId: target.refId,
-                            hide: target.hide,
-                            type: 'timeserie'
+                            hide: target.hide
                         };
                     });
                     options.targets = targets;
