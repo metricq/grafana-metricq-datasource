@@ -28,7 +28,7 @@
         <div class="gf-form-inline">
             <div class="gf-form" ng-if="!ctrl.target.rawQuery">
                 <label class="gf-form-label">Aggregate</label>
-                <value-select-dropdown dashboard="ctrl.dummydashboard" variable="ctrl.selected_aggregates" on-updated="ctrl.aggregatesUpdated(variable)" />
+                <value-select-dropdown dashboard="ctrl.dummydashboard" variable="ctrl.selected_aggregates" on-updated="ctrl.aggregatesUpdated()" />
                 <input type="text" class="gf-form-input" ng-model="ctrl.target.smaWindow"
                        data-placement="right" spellcheck='false' placeholder="sma window in ms"
                        ng-blur="ctrl.onChangeInternal()">

@@ -15,5 +15,5 @@ export declare class MetricQQueryCtrl extends QueryCtrl {
     getAvailableAliasTypes(): string[];
     getOptions(query: any): any;
     onChangeInternal(): void;
-    aggregatesUpdated(variable: any): void;
+    aggregatesUpdated(): void;
 }

@@ -8,7 +8,7 @@ export class MetricQQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   available_aggregates : string[] = ['min', 'max', 'avg', 'sma', 'count'];
-  available_alias_types:string[] = ['', 'by value', 'by metric', 'by description', 'by metric and description'];
+  available_alias_types:string[] = ['', 'custom', 'description'];
 
   dummydashboard = {
     on: (str, fn, val) => {}
@@ -28,19 +28,21 @@ export class MetricQQueryCtrl extends QueryCtrl {
     this.target.aliasType = this.target.aliasType || '';
     this.target.aliasValue = this.target.aliasValue || '';
     this.target.targetMetric = this.target.targetMetric || 'select metric';
-    this.target.aggregates = this.target.aggregates || [];
+    this.target.aggregates = this.target.aggregates || ['avg'];
     this.target.smaWindow = this.target.smaWindow || 0;
 
     let options = [];
 
     for (let aggregate of this.available_aggregates) {
-      console.log(aggregate)
-      options.push({ text: aggregate, value: aggregate, selected: this.target.aggregates.includes(aggregate) })
+      options.push({ text: aggregate, value: aggregate })
     }
 
     this.selected_aggregates = {
       multi: true,
-      current: {},
+      current: {
+        text: this.target.aggregates.join(" + "),
+        value: this.target.aggregates
+      },
       useTags: false,
       options: options
     };
@@ -58,7 +60,8 @@ export class MetricQQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh(); // Asks the panel to refresh data.
   }
 
-  aggregatesUpdated(variable) {
-    console.log(variable);
+  aggregatesUpdated() {
+    this.target.aggregates = this.selected_aggregates["current"].value;
+    this.onChangeInternal();
   }
 }

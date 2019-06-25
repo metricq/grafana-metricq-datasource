@@ -24,7 +24,7 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                     _super.call(this, $scope, $injector);
                     this.templateSrv = templateSrv;
                     this.available_aggregates = ['min', 'max', 'avg', 'sma', 'count'];
-                    this.available_alias_types = ['', 'by value', 'by metric', 'by description', 'by metric and description'];
+                    this.available_alias_types = ['', 'custom', 'description'];
                     this.dummydashboard = {
                         on: function (str, fn, val) { }
                     };
@@ -34,17 +34,19 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                     this.target.aliasType = this.target.aliasType || '';
                     this.target.aliasValue = this.target.aliasValue || '';
                     this.target.targetMetric = this.target.targetMetric || 'select metric';
-                    this.target.aggregates = this.target.aggregates || [];
+                    this.target.aggregates = this.target.aggregates || ['avg'];
                     this.target.smaWindow = this.target.smaWindow || 0;
                     var options = [];
                     for (var _i = 0, _a = this.available_aggregates; _i < _a.length; _i++) {
                         var aggregate = _a[_i];
-                        console.log(aggregate);
-                        options.push({ text: aggregate, value: aggregate, selected: this.target.aggregates.includes(aggregate) });
+                        options.push({ text: aggregate, value: aggregate });
                     }
                     this.selected_aggregates = {
                         multi: true,
-                        current: {},
+                        current: {
+                            text: this.target.aggregates.join(" + "),
+                            value: this.target.aggregates
+                        },
                         useTags: false,
                         options: options
                     };
@@ -58,8 +60,9 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                 MetricQQueryCtrl.prototype.onChangeInternal = function () {
                     this.panelCtrl.refresh(); // Asks the panel to refresh data.
                 };
-                MetricQQueryCtrl.prototype.aggregatesUpdated = function (variable) {
-                    console.log(variable);
+                MetricQQueryCtrl.prototype.aggregatesUpdated = function () {
+                    this.target.aggregates = this.selected_aggregates["current"].value;
+                    this.onChangeInternal();
                 };
                 MetricQQueryCtrl.templateUrl = 'partials/query.editor.html';
                 return MetricQQueryCtrl;
