@@ -8,13 +8,14 @@ export class MetricQQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   available_aggregates : string[] = ['min', 'max', 'avg', 'sma', 'count'];
-  available_alias_types:string[] = ['', 'custom', 'description'];
+  available_alias_types = {'': 'use metric name', 'custom': 'use custom text', 'description': 'use description from metadata'};
 
   dummydashboard = {
     on: (str, fn, val) => {}
   };
 
   selected_aggregates = {};
+  //hasTextEditMode = true;
 
   defaults = {
   };
@@ -24,6 +25,7 @@ export class MetricQQueryCtrl extends QueryCtrl {
     super($scope, $injector);
 
     _.defaultsDeep(this.target, this.defaults);
+    //this.hasRawMode = true;
 
     this.target.aliasType = this.target.aliasType || '';
     this.target.aliasValue = this.target.aliasValue || '';
@@ -64,4 +66,13 @@ export class MetricQQueryCtrl extends QueryCtrl {
     this.target.aggregates = this.selected_aggregates["current"].value;
     this.onChangeInternal();
   }
+
+  isSmaSelected() {
+    return this.target.aggregates.includes("sma");
+  }
+
+  isCustomAliasSelected() {
+    return this.target.aliasType == "custom";
+  }
+
 }

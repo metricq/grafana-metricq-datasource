@@ -24,13 +24,15 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                     _super.call(this, $scope, $injector);
                     this.templateSrv = templateSrv;
                     this.available_aggregates = ['min', 'max', 'avg', 'sma', 'count'];
-                    this.available_alias_types = ['', 'custom', 'description'];
+                    this.available_alias_types = { '': 'use metric name', 'custom': 'use custom text', 'description': 'use description from metadata' };
                     this.dummydashboard = {
                         on: function (str, fn, val) { }
                     };
                     this.selected_aggregates = {};
+                    //hasTextEditMode = true;
                     this.defaults = {};
                     lodash_1.default.defaultsDeep(this.target, this.defaults);
+                    //this.hasRawMode = true;
                     this.target.aliasType = this.target.aliasType || '';
                     this.target.aliasValue = this.target.aliasValue || '';
                     this.target.targetMetric = this.target.targetMetric || 'select metric';
@@ -63,6 +65,12 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                 MetricQQueryCtrl.prototype.aggregatesUpdated = function () {
                     this.target.aggregates = this.selected_aggregates["current"].value;
                     this.onChangeInternal();
+                };
+                MetricQQueryCtrl.prototype.isSmaSelected = function () {
+                    return this.target.aggregates.includes("sma");
+                };
+                MetricQQueryCtrl.prototype.isCustomAliasSelected = function () {
+                    return this.target.aliasType == "custom";
                 };
                 MetricQQueryCtrl.templateUrl = 'partials/query.editor.html';
                 return MetricQQueryCtrl;

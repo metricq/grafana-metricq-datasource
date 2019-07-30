@@ -4,7 +4,11 @@ export declare class MetricQQueryCtrl extends QueryCtrl {
     private templateSrv;
     static templateUrl: string;
     available_aggregates: string[];
-    available_alias_types: string[];
+    available_alias_types: {
+        '': string;
+        'custom': string;
+        'description': string;
+    };
     dummydashboard: {
         on: (str: any, fn: any, val: any) => void;
     };
@@ -12,8 +16,14 @@ export declare class MetricQQueryCtrl extends QueryCtrl {
     defaults: {};
     /** @ngInject **/
     constructor($scope: any, $injector: any, templateSrv: any);
-    getAvailableAliasTypes(): string[];
+    getAvailableAliasTypes(): {
+        '': string;
+        'custom': string;
+        'description': string;
+    };
     getOptions(query: any): any;
     onChangeInternal(): void;
     aggregatesUpdated(): void;
+    isSmaSelected(): any;
+    isCustomAliasSelected(): boolean;
 }
