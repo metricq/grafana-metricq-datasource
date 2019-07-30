@@ -34,7 +34,7 @@ export class MetricQQueryCtrl extends QueryCtrl {
     let options = [];
 
     for (let aggregate of this.available_aggregates) {
-      options.push({ text: aggregate, value: aggregate })
+      options.push({ text: aggregate, value: aggregate, selected: this.target.aggregates.includes(aggregate) })
     }
 
     this.selected_aggregates = {

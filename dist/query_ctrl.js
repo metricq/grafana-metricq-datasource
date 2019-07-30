@@ -39,7 +39,7 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                     var options = [];
                     for (var _i = 0, _a = this.available_aggregates; _i < _a.length; _i++) {
                         var aggregate = _a[_i];
-                        options.push({ text: aggregate, value: aggregate });
+                        options.push({ text: aggregate, value: aggregate, selected: this.target.aggregates.includes(aggregate) });
                     }
                     this.selected_aggregates = {
                         multi: true,
