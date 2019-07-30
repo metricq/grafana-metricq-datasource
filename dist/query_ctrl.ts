@@ -29,7 +29,7 @@ export class MetricQQueryCtrl extends QueryCtrl {
     this.target.aliasValue = this.target.aliasValue || '';
     this.target.targetMetric = this.target.targetMetric || 'select metric';
     this.target.aggregates = this.target.aggregates || ['avg'];
-    this.target.smaWindow = this.target.smaWindow || 0;
+    this.target.smaWindow = this.target.smaWindow || '';
 
     let options = [];
 

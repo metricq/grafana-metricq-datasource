@@ -35,7 +35,7 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                     this.target.aliasValue = this.target.aliasValue || '';
                     this.target.targetMetric = this.target.targetMetric || 'select metric';
                     this.target.aggregates = this.target.aggregates || ['avg'];
-                    this.target.smaWindow = this.target.smaWindow || 0;
+                    this.target.smaWindow = this.target.smaWindow || '';
                     var options = [];
                     for (var _i = 0, _a = this.available_aggregates; _i < _a.length; _i++) {
                         var aggregate = _a[_i];
