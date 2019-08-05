@@ -1,6 +1,6 @@
 {
   "name": "grafana-metricq-datasource",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "MetricQ Data Source for Grafana.",
   "scripts": {
     "build": "grunt",
