@@ -24,7 +24,6 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                     _super.call(this, $scope, $injector);
                     this.templateSrv = templateSrv;
                     this.available_aggregates = ['min', 'max', 'avg', 'sma', 'count'];
-                    this.available_alias_types = { '': 'use metric name', 'custom': 'use custom text', 'description': 'use description from metadata' };
                     this.dummydashboard = {
                         on: function (str, fn, val) { }
                     };
@@ -33,29 +32,25 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                     this.defaults = {};
                     lodash_1.default.defaultsDeep(this.target, this.defaults);
                     //this.hasRawMode = true;
-                    this.target.aliasType = this.target.aliasType || '';
-                    this.target.aliasValue = this.target.aliasValue || '';
-                    this.target.targetMetric = this.target.targetMetric || 'select metric';
-                    this.target.aggregates = this.target.aggregates || ['avg'];
+                    this.target.name = this.target.name || this.target.aliasValue || (this.target.aliasType == 'description' && '$description') || '';
+                    this.target.metric = this.target.metric || this.target.targetMetric || 'select metric';
+                    this.target.functions = this.target.functions || this.target.aggregates || ['avg'];
                     this.target.smaWindow = this.target.smaWindow || '';
                     var options = [];
                     for (var _i = 0, _a = this.available_aggregates; _i < _a.length; _i++) {
                         var aggregate = _a[_i];
-                        options.push({ text: aggregate, value: aggregate, selected: this.target.aggregates.includes(aggregate) });
+                        options.push({ text: aggregate, value: aggregate, selected: this.target.functions.includes(aggregate) });
                     }
                     this.selected_aggregates = {
                         multi: true,
                         current: {
-                            text: this.target.aggregates.join(" + "),
-                            value: this.target.aggregates
+                            text: this.target.functions.join(" + "),
+                            value: this.target.functions
                         },
                         useTags: false,
                         options: options
                     };
                 }
-                MetricQQueryCtrl.prototype.getAvailableAliasTypes = function () {
-                    return this.available_alias_types;
-                };
                 MetricQQueryCtrl.prototype.getOptions = function (query) {
                     return this.datasource.metricFindQuery(query || '');
                 };
@@ -63,14 +58,11 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                     this.panelCtrl.refresh(); // Asks the panel to refresh data.
                 };
                 MetricQQueryCtrl.prototype.aggregatesUpdated = function () {
-                    this.target.aggregates = this.selected_aggregates["current"].value;
+                    this.target.functions = this.selected_aggregates["current"].value;
                     this.onChangeInternal();
                 };
                 MetricQQueryCtrl.prototype.isSmaSelected = function () {
-                    return this.target.aggregates.includes("sma");
-                };
-                MetricQQueryCtrl.prototype.isCustomAliasSelected = function () {
-                    return this.target.aliasType == "custom";
+                    return this.target.functions.includes("sma");
                 };
                 MetricQQueryCtrl.templateUrl = 'partials/query.editor.html';
                 return MetricQQueryCtrl;

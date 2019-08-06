@@ -88,10 +88,9 @@ System.register(['lodash'], function(exports_1) {
                     });
                     var targets = lodash_1.default.map(options.targets, function (target) {
                         return {
-                            alias_type: target.aliasType,
-                            alias_value: _this.templateSrv.replace(target.aliasValue, options.scopedVars, 'regex'),
-                            target_metric: _this.templateSrv.replace(target.targetMetric, options.scopedVars, 'regex'),
-                            aggregates: target.aggregates,
+                            name: _this.templateSrv.replace(target.name, options.scopedVars, 'regex'),
+                            metric: _this.templateSrv.replace(target.metric, options.scopedVars, 'regex'),
+                            functions: target.functions,
                             sma_window: target.smaWindow,
                             refId: target.refId,
                             hide: target.hide

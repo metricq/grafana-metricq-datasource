@@ -8,7 +8,6 @@ export class MetricQQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   available_aggregates : string[] = ['min', 'max', 'avg', 'sma', 'count'];
-  available_alias_types = {'': 'use metric name', 'custom': 'use custom text', 'description': 'use description from metadata'};
 
   dummydashboard = {
     on: (str, fn, val) => {}
@@ -27,31 +26,26 @@ export class MetricQQueryCtrl extends QueryCtrl {
     _.defaultsDeep(this.target, this.defaults);
     //this.hasRawMode = true;
 
-    this.target.aliasType = this.target.aliasType || '';
-    this.target.aliasValue = this.target.aliasValue || '';
-    this.target.targetMetric = this.target.targetMetric || 'select metric';
-    this.target.aggregates = this.target.aggregates || ['avg'];
+    this.target.name = this.target.name || this.target.aliasValue || (this.target.aliasType == 'description' && '$description') || '';
+    this.target.metric = this.target.metric || this.target.targetMetric || 'select metric';
+    this.target.functions = this.target.functions || this.target.aggregates || ['avg'];
     this.target.smaWindow = this.target.smaWindow || '';
 
     let options = [];
 
     for (let aggregate of this.available_aggregates) {
-      options.push({ text: aggregate, value: aggregate, selected: this.target.aggregates.includes(aggregate) })
+      options.push({ text: aggregate, value: aggregate, selected: this.target.functions.includes(aggregate) })
     }
 
     this.selected_aggregates = {
       multi: true,
       current: {
-        text: this.target.aggregates.join(" + "),
-        value: this.target.aggregates
+        text: this.target.functions.join(" + "),
+        value: this.target.functions
       },
       useTags: false,
       options: options
     };
-  }
-
-  getAvailableAliasTypes() {
-    return this.available_alias_types;
   }
 
   getOptions(query) {
@@ -63,16 +57,12 @@ export class MetricQQueryCtrl extends QueryCtrl {
   }
 
   aggregatesUpdated() {
-    this.target.aggregates = this.selected_aggregates["current"].value;
+    this.target.functions = this.selected_aggregates["current"].value;
     this.onChangeInternal();
   }
 
   isSmaSelected() {
-    return this.target.aggregates.includes("sma");
-  }
-
-  isCustomAliasSelected() {
-    return this.target.aliasType == "custom";
+    return this.target.functions.includes("sma");
   }
 
 }

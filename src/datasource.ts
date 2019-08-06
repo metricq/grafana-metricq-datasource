@@ -95,10 +95,9 @@ export default class MetricQDatasource {
 
     var targets = _.map(options.targets, target => {
       return {
-        alias_type: target.aliasType,
-        alias_value: this.templateSrv.replace(target.aliasValue, options.scopedVars, 'regex'),
-        target_metric: this.templateSrv.replace(target.targetMetric, options.scopedVars, 'regex'),
-        aggregates: target.aggregates,
+        name: this.templateSrv.replace(target.name, options.scopedVars, 'regex'),
+        metric: this.templateSrv.replace(target.metric, options.scopedVars, 'regex'),
+        functions: target.functions,
         sma_window: target.smaWindow,
         refId: target.refId,
         hide: target.hide
