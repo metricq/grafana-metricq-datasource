@@ -28,10 +28,8 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                         on: function (str, fn, val) { }
                     };
                     this.selected_aggregates = {};
-                    //hasTextEditMode = true;
                     this.defaults = {};
                     lodash_1.default.defaultsDeep(this.target, this.defaults);
-                    //this.hasRawMode = true;
                     this.target.name = this.target.name || this.target.aliasValue || (this.target.aliasType == 'description' && '$description') || '';
                     this.target.metric = this.target.metric || this.target.targetMetric || 'select metric';
                     this.target.functions = this.target.functions || this.target.aggregates || ['avg'];

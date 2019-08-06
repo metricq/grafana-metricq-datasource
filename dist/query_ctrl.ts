@@ -14,7 +14,6 @@ export class MetricQQueryCtrl extends QueryCtrl {
   };
 
   selected_aggregates = {};
-  //hasTextEditMode = true;
 
   defaults = {
   };
@@ -24,7 +23,6 @@ export class MetricQQueryCtrl extends QueryCtrl {
     super($scope, $injector);
 
     _.defaultsDeep(this.target, this.defaults);
-    //this.hasRawMode = true;
 
     this.target.name = this.target.name || this.target.aliasValue || (this.target.aliasType == 'description' && '$description') || '';
     this.target.metric = this.target.metric || this.target.targetMetric || 'select metric';
