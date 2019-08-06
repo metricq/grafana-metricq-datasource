@@ -28,6 +28,7 @@ export class MetricQQueryCtrl extends QueryCtrl {
     this.target.metric = this.target.metric || this.target.targetMetric || 'select metric';
     this.target.functions = this.target.functions || this.target.aggregates || ['avg'];
     this.target.smaWindow = this.target.smaWindow || '';
+    this.target.scalingFactor = this.target.scalingFactor || '1';
 
     let options = [];
 

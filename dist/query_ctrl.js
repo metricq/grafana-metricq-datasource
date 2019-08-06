@@ -34,6 +34,7 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                     this.target.metric = this.target.metric || this.target.targetMetric || 'select metric';
                     this.target.functions = this.target.functions || this.target.aggregates || ['avg'];
                     this.target.smaWindow = this.target.smaWindow || '';
+                    this.target.scalingFactor = this.target.scalingFactor || '1';
                     var options = [];
                     for (var _i = 0, _a = this.available_aggregates; _i < _a.length; _i++) {
                         var aggregate = _a[_i];

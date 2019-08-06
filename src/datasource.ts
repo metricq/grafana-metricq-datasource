@@ -99,6 +99,7 @@ export default class MetricQDatasource {
         metric: this.templateSrv.replace(target.metric, options.scopedVars, 'regex'),
         functions: target.functions,
         sma_window: target.smaWindow,
+        scaling_factor: target.scalingFactor,
         refId: target.refId,
         hide: target.hide
       };

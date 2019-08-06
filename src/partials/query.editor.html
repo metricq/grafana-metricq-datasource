@@ -31,5 +31,13 @@
                        ng-if="ctrl.isSmaSelected()">
             </div>
         </div>
+        <div class="gf-form-inline">
+          <div class="gf-form">
+            <label class="gf-form-label">Scaling factor</label>
+            <input type="text" class="gf-form-input" ng-model="ctrl.target.scalingFactor"
+                   data-placement="right" spellcheck='false'
+                   ng-blur="ctrl.onChangeInternal()">
+          </div>
+        </div>
     </div>
 </query-editor-row>
