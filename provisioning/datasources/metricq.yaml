@@ -1,0 +1,8 @@
+datasources:
+- name: MetricQ Datasource
+  type: metricq-metricq-datasource
+  access: proxy
+  url: http://metricq-grafana:4000
+  isDefault: true
+  version: 1
+  editable: true
