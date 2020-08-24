@@ -28,6 +28,11 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                         on: function (str, fn, val) { }
                     };
                     this.selected_aggregates = {};
+                    this.min_selected = false;
+                    this.max_selected = false;
+                    this.avg_selected = false;
+                    this.sma_selected = false;
+                    this.count_selected = false;
                     this.defaults = {};
                     lodash_1.default.defaultsDeep(this.target, this.defaults);
                     this.target.name = this.target.name || this.target.aliasValue || (this.target.aliasType == 'description' && '$description') || '';
@@ -36,29 +41,34 @@ System.register(['lodash', 'app/plugins/sdk', './css/query_editor.css!'], functi
                     this.target.smaWindow = this.target.smaWindow || '';
                     this.target.scalingFactor = this.target.scalingFactor || '1';
                     var options = [];
-                    for (var _i = 0, _a = this.available_aggregates; _i < _a.length; _i++) {
-                        var aggregate = _a[_i];
-                        options.push({ text: aggregate, value: aggregate, selected: this.target.functions.includes(aggregate) });
-                    }
-                    this.selected_aggregates = {
-                        multi: true,
-                        current: {
-                            text: this.target.functions.join(" + "),
-                            value: this.target.functions
-                        },
-                        useTags: false,
-                        options: options
-                    };
+                    this.min_selected = this.target.functions.includes("min");
+                    this.max_selected = this.target.functions.includes("max");
+                    this.avg_selected = this.target.functions.includes("avg");
+                    this.sma_selected = this.target.functions.includes("sma");
+                    this.count_selected = this.target.functions.includes("count");
                 }
                 MetricQQueryCtrl.prototype.getOptions = function (query) {
                     return this.datasource.metricFindQuery(query || '');
                 };
                 MetricQQueryCtrl.prototype.onChangeInternal = function () {
+                    var functions = [];
+                    if (this.min_selected) {
+                        functions = functions.concat(["min"]);
+                    }
+                    if (this.max_selected) {
+                        functions = functions.concat(["max"]);
+                    }
+                    if (this.avg_selected) {
+                        functions = functions.concat(["avg"]);
+                    }
+                    if (this.sma_selected) {
+                        functions = functions.concat(["sma"]);
+                    }
+                    if (this.count_selected) {
+                        functions = functions.concat(["count"]);
+                    }
+                    this.target.functions = functions;
                     this.panelCtrl.refresh(); // Asks the panel to refresh data.
-                };
-                MetricQQueryCtrl.prototype.aggregatesUpdated = function () {
-                    this.target.functions = this.selected_aggregates["current"].value;
-                    this.onChangeInternal();
                 };
                 MetricQQueryCtrl.prototype.isSmaSelected = function () {
                     return this.target.functions.includes("sma");

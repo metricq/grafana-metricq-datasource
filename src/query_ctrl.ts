@@ -14,6 +14,12 @@ export class MetricQQueryCtrl extends QueryCtrl {
   };
 
   selected_aggregates = {};
+  min_selected = false;
+  max_selected = false;
+  avg_selected = false;
+  sma_selected = false;
+  count_selected = false;
+
 
   defaults = {
   };
@@ -32,19 +38,11 @@ export class MetricQQueryCtrl extends QueryCtrl {
 
     let options = [];
 
-    for (let aggregate of this.available_aggregates) {
-      options.push({ text: aggregate, value: aggregate, selected: this.target.functions.includes(aggregate) })
-    }
-
-    this.selected_aggregates = {
-      multi: true,
-      current: {
-        text: this.target.functions.join(" + "),
-        value: this.target.functions
-      },
-      useTags: false,
-      options: options
-    };
+    this.min_selected = this.target.functions.includes("min");
+    this.max_selected = this.target.functions.includes("max");
+    this.avg_selected = this.target.functions.includes("avg");
+    this.sma_selected = this.target.functions.includes("sma");
+    this.count_selected = this.target.functions.includes("count");
   }
 
   getOptions(query) {
@@ -52,12 +50,30 @@ export class MetricQQueryCtrl extends QueryCtrl {
   }
 
   onChangeInternal() {
-    this.panelCtrl.refresh(); // Asks the panel to refresh data.
-  }
+    let functions = [];
 
-  aggregatesUpdated() {
-    this.target.functions = this.selected_aggregates["current"].value;
-    this.onChangeInternal();
+    if (this.min_selected) {
+      functions = [...functions, "min"];
+    }
+
+    if (this.max_selected) {
+      functions = [...functions, "max"];
+    }
+
+    if (this.avg_selected) {
+      functions = [...functions, "avg"];
+    }
+
+    if (this.sma_selected) {
+      functions = [...functions, "sma"];
+    }
+
+    if (this.count_selected) {
+      functions = [...functions, "count"];
+    }
+
+    this.target.functions = functions;
+    this.panelCtrl.refresh(); // Asks the panel to refresh data.
   }
 
   isSmaSelected() {

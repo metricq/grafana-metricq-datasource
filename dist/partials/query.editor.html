@@ -25,7 +25,31 @@
         <div class="gf-form-inline">
             <div class="gf-form">
                 <label class="gf-form-label">Functions</label>
-                <value-select-dropdown dashboard="ctrl.dummydashboard" variable="ctrl.selected_aggregates" on-updated="ctrl.aggregatesUpdated()" />
+              <div class="gf-form-checkbox" ng-click="ctrl.min_selected = !ctrl.min_selected; ctrl.onChangeInternal()">
+                <input id="check-min-{{ctrl.id}}" type="checkbox" ng-model="ctrl.min_selected" ng-change="ctrl.onChangeInternal()">
+                <span class="gf-form-switch__checkbox"></span>
+                <label>min</label>
+              </div>
+              <div class="gf-form-checkbox" ng-click="ctrl.max_selected = !ctrl.max_selected; ctrl.onChangeInternal()">
+                <input id="check-max-{{ctrl.id}}" type="checkbox" ng-model="ctrl.max_selected" ng-change="ctrl.onChangeInternal()">
+                <span class="gf-form-switch__checkbox"></span>
+                <label>max</label>
+              </div>
+              <div class="gf-form-checkbox" ng-click="ctrl.avg_selected = !ctrl.avg_selected; ctrl.onChangeInternal()">
+                <input id="check-avg-{{ctrl.id}}" type="checkbox" ng-model="ctrl.avg_selected" ng-change="ctrl.onChangeInternal()">
+                <span class="gf-form-switch__checkbox"></span>
+                <label>avg</label>
+              </div>
+              <div class="gf-form-checkbox" ng-click="ctrl.count_selected = !ctrl.count_selected; ctrl.onChangeInternal()">
+                <input id="check-count-{{ctrl.id}}" type="checkbox" ng-model="ctrl.count_selected" ng-change="ctrl.onChangeInternal()">
+                <span class="gf-form-switch__checkbox"></span>
+                <label>count</label>
+              </div>
+              <div class="gf-form-checkbox" ng-click="ctrl.sma_selected = !ctrl.sma_selected; ctrl.onChangeInternal()">
+                <input id="check-sma-{{ctrl.id}}" type="checkbox" ng-model="ctrl.sma_selected" ng-change="ctrl.onChangeInternal()">
+                <span class="gf-form-switch__checkbox"></span>
+                <label>sma</label>
+              </div>
             </div>
           <div class="gf-form">
                 <input type="text" class="gf-form-input" ng-model="ctrl.target.smaWindow"
