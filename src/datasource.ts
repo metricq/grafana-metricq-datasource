@@ -37,16 +37,6 @@ export class MetricQDatasource extends DataSourceApi<MetricQQuery, MetricQDataSo
     let query = this.buildQueryParameters(options);
 
     query.targets = query.targets.filter((t: MetricQQuery) => !t.hide);
-    //
-    // if (query.targets.length <= 0) {
-    //   return this.$q.when({ data: [] });
-    // }
-    //
-    // if (this.templateSrv.getAdhocFilters) {
-    //   query.adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    // } else {
-    //   query.adhocFilters = [];
-    // }
 
     const data = await this.doRequest(this.url + '/query', 'POST', query).then((response: { data: any[] }) => {
       return response.data.map((result: any) => {
@@ -66,32 +56,8 @@ export class MetricQDatasource extends DataSourceApi<MetricQQuery, MetricQDataSo
     });
 
     return { data };
-
-    // const promises = options.targets.map((query) =>
-    //   this.doRequest(query).then((response) => {
-    //     const frame = new MutableDataFrame({
-    //       refId: query.refId,
-    //       fields: [
-    //         { name: 'Time', type: FieldType.time },
-    //         { name: 'Value', type: FieldType.number },
-    //       ],
-    //     });
-    //
-    //     response.data.forEach((point: any) => {
-    //       frame.appendRow([point.time, point.value]);
-    //     });
-    //
-    //     return frame;
-    //   })
-    // );
-    //
-    // return Promise.all(promises).then((data) => ({ data }));
   }
 
-  // annotationQuery(options) {
-  //   throw new Error('Annotation Support not implemented yet.');
-  // }
-  //
   async metricFindQuery(query: string): Promise<MetricFindValue[]> {
     const interpolated = {
       target: getTemplateSrv().replace(query, undefined, 'regex'),
