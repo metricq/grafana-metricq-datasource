@@ -42,6 +42,7 @@ export class MetricQDatasource extends DataSourceApi<MetricQQuery, MetricQDataSo
       return response.data.map((result: any) => {
         const frame = new MutableDataFrame({
           refId: result.refId,
+          name: result.target,
           fields: [
             { name: 'Time', type: FieldType.time },
             { name: 'Value', type: FieldType.number },
