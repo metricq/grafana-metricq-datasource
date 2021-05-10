@@ -47,6 +47,18 @@ export class MetricQDatasource extends DataSourceApi<MetricQQuery, MetricQDataSo
             { name: 'Time', type: FieldType.time },
             { name: 'Value', type: FieldType.number },
           ],
+          meta: {
+            stats: [
+              {
+                displayName: 'time-measurements-db',
+                value: result.time_measurements.db
+              },
+              {
+                displayName: 'time-measurements-http',
+                value: result.time_measurements.http
+              }
+            ]
+          }
         });
         result.datapoints.forEach((point: any) => {
           frame.appendRow([point[1], point[0]]);
