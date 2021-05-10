@@ -51,14 +51,14 @@ export class MetricQDatasource extends DataSourceApi<MetricQQuery, MetricQDataSo
             stats: [
               {
                 displayName: 'time-measurements-db',
-                value: result.time_measurements.db
+                value: result.time_measurements.db,
               },
               {
                 displayName: 'time-measurements-http',
-                value: result.time_measurements.http
-              }
-            ]
-          }
+                value: result.time_measurements.http,
+              },
+            ],
+          },
         });
         result.datapoints.forEach((point: any) => {
           frame.appendRow([point[1], point[0]]);
