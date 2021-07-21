@@ -121,7 +121,7 @@ export class MetricQDatasource extends DataSourceApi<MetricQQuery, MetricQDataSo
   buildQueryParameters(options: DataQueryRequest<MetricQQuery>) {
     //remove placeholder targets
     options.targets = _.filter(options.targets, (target: MetricQQuery) => {
-      return target.metric !== 'select metric';
+      return target.metric !== undefined;
     });
 
     options.targets = _.map(options.targets, (target: MetricQQuery) => {

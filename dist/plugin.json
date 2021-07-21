@@ -20,7 +20,7 @@
       { "name": "Apache License", "url": "https://github.com/metricq/grafana-metricq-datasource/blob/master/LICENSE" }
     ],
     "version": "1.0.0",
-    "updated": "2021-05-10"
+    "updated": "2021-07-21"
   },
 
   "dependencies": {

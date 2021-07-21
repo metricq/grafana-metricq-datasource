@@ -8,7 +8,7 @@ import { defaultQuery, MetricQDataSourceOptions, MetricQQuery } from './types';
 
 type Props = QueryEditorProps<MetricQDatasource, MetricQQuery, MetricQDataSourceOptions>;
 export interface State {
-  rawMetric: boolean;
+  autocomplete: boolean;
 }
 
 const labelWidth = 16;
@@ -17,7 +17,7 @@ export class MetricQQueryEditor extends PureComponent<Props, State> {
   constructor(props: Readonly<Props>) {
     super(props);
     this.state = {
-      rawMetric: false,
+      autocomplete: true,
     };
   }
 
@@ -51,9 +51,9 @@ export class MetricQQueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
-  onRawMetricChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onAutocompleteChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({
-      rawMetric: event.target.checked,
+      autocomplete: event.target.checked,
     });
   };
 
@@ -88,7 +88,7 @@ export class MetricQQueryEditor extends PureComponent<Props, State> {
             tooltip={'Start typing to search for available metrics (dropdown shows first 100 results)'}
           >
             <>
-              {!this.state.rawMetric && (
+              {this.state.autocomplete && (
                 <AsyncSelect
                   isMulti={false}
                   isClearable={true}
@@ -106,7 +106,7 @@ export class MetricQQueryEditor extends PureComponent<Props, State> {
                   value={metricVal}
                 />
               )}
-              {this.state.rawMetric && (
+              {!this.state.autocomplete && (
                 <Input
                   value={metric}
                   onChange={(event: ChangeEvent<HTMLInputElement>) => this.onMetricChange(event.target.value)}
@@ -115,8 +115,8 @@ export class MetricQQueryEditor extends PureComponent<Props, State> {
               )}
             </>
           </InlineField>
-          <InlineField label="Raw">
-            <InlineSwitch value={this.state.rawMetric} onChange={this.onRawMetricChange} />
+          <InlineField label="Autocomplete">
+            <InlineSwitch value={this.state.autocomplete} onChange={this.onAutocompleteChange} />
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>

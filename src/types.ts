@@ -9,7 +9,7 @@ export interface MetricQQuery extends DataQuery {
 }
 
 export const defaultQuery: Partial<MetricQQuery> = {
-  metric: 'select metric',
+  metric: undefined,
   functions: ['avg'],
   smaWindow: '',
   scalingFactor: 1,
