@@ -27,9 +27,9 @@ export class MetricQQueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
-  onFunctionsChange = (value: any) => {
+  onFunctionsChange = (selectedFunctions:  Array<SelectableValue<string>>) => {
     const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, functions: value.map((val: SelectableValue) => val.value) });
+    onChange({ ...query, functions: selectedFunctions.map((val: SelectableValue<string>) => val.value) });
     onRunQuery();
   };
 
