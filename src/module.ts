@@ -1,14 +1,10 @@
-import MetricQDatasource from './datasource';
-import {MetricQQueryCtrl} from './query_ctrl';
-import {MetricQConfigCtrl} from './config_ctrl';
+import { MetricQDatasource } from './datasource';
+import { MetricQQueryEditor } from './QueryEditor';
+import { MetricQConfigEditor } from './ConfigEditor';
 
-class MetricQAnnotationsQueryCtrl {
-  static templateUrl = 'partials/annotations.editor.html';
-}
+import { DataSourcePlugin } from '@grafana/data';
+import { MetricQDataSourceOptions, MetricQQuery } from './types';
 
-export {
-  MetricQDatasource as Datasource,
-  MetricQQueryCtrl as QueryCtrl,
-  MetricQConfigCtrl as ConfigCtrl,
-  MetricQAnnotationsQueryCtrl as AnnotationsQueryCtrl,
-};
+export const plugin = new DataSourcePlugin<MetricQDatasource, MetricQQuery, MetricQDataSourceOptions>(MetricQDatasource)
+  .setConfigEditor(MetricQConfigEditor)
+  .setQueryEditor(MetricQQueryEditor);

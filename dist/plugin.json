@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
   "name": "MetricQ Datasource",
   "id": "metricq-metricq-datasource",
@@ -15,18 +16,17 @@
       "large": "img/metricq_logo.png"
     },
     "links": [
-      {"name": "Project site", "url": "https://github.com/metricq/grafana-metricq-datasource"},
-      {"name": "Apache License", "url": "https://github.com/metricq/grafana-metricq-datasource/blob/master/LICENSE"}
+      { "name": "Project site", "url": "https://github.com/metricq/grafana-metricq-datasource" },
+      { "name": "Apache License", "url": "https://github.com/metricq/grafana-metricq-datasource/blob/master/LICENSE" }
     ],
-    "version": "0.0.6",
-    "updated": "2020-08-24"
+    "version": "1.0.0",
+    "updated": "2021-07-21"
   },
 
   "dependencies": {
-    "grafanaVersion": "4.5.x",
-    "plugins": [ ]
+    "grafanaDependency": ">=7.5.5",
+    "plugins": []
   },
 
-  "metrics": true,
-  "annotations": false
+  "metrics": true
 }
