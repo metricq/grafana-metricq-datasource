@@ -1,12 +1,16 @@
 ## MetricQ Data Source For Grafana
 
-based on [TypeScript Template Data Source for Grafana](https://github.com/grafana/typescript-template-datasource) and [SimpleJson Datasource](https://github.com/grafana/simple-json-datasource), react update based on [Grafana Data Source Plugin Template](https://github.com/grafana/grafana-starter-datasource)
+based on [SimpleJson Datasource](https://github.com/grafana/simple-json-datasource), react update based on [Grafana Data Source Plugin Template](https://github.com/grafana/grafana-starter-datasource)
 
-## What is Grafana Data Source Plugin?
+## What is MetricQ Data Source Plugin?
 
-Grafana supports a wide range of data sources, including Prometheus, MySQL, and even Datadog. There’s a good chance you can already visualize metrics from the systems you have set up. In some cases, though, you already have an in-house metrics solution that you’d like to add to your Grafana dashboards. Grafana Data Source Plugins enables integrating such solutions with Grafana.
+MetricQ Data Source Plugins enables integrating MetricQ with Grafana via [`metricq-grafana`](https://github.com/metricq/metricq-grafana).
 
 ## Getting started
+
+This plugins comes with a production build in the `dist/` folder. Just clone it into your Grafana plugins directory.
+
+## Development setup
 
 1. Install dependencies
 
@@ -31,9 +35,3 @@ Grafana supports a wide range of data sources, including Prometheus, MySQL, and 
    ```bash
    yarn build
    ```
-
-### CHANGELOG
-
-#### v0.0.1
-
-- First version.

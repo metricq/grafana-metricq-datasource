@@ -7,7 +7,7 @@ import { MetricQDatasource } from './datasource';
 import { defaultQuery, MetricQDataSourceOptions, MetricQQuery } from './types';
 
 type Props = QueryEditorProps<MetricQDatasource, MetricQQuery, MetricQDataSourceOptions>;
-export interface State {
+interface State {
   autocomplete: boolean;
 }
 
@@ -27,9 +27,9 @@ export class MetricQQueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
-  onFunctionsChange = (selectedFunctions:  Array<SelectableValue<string>>) => {
+  onFunctionsChange = (selectedFunctions: Array<SelectableValue<string>>) => {
     const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, functions: selectedFunctions.map((val: SelectableValue<string>) => val.value) });
+    onChange({ ...query, functions: selectedFunctions.map((val: SelectableValue<string>) => val.value || '') });
     onRunQuery();
   };
 
@@ -73,10 +73,13 @@ export class MetricQQueryEditor extends PureComponent<Props, State> {
     const query = defaults(this.props.query, defaultQuery);
     const { name, metric, functions, smaWindow, scalingFactor } = query;
 
-    const metricVal = {
-      label: metric,
-      value: metric,
-    };
+    const metricVal =
+      metric === undefined
+        ? null
+        : {
+            label: metric,
+            value: metric,
+          };
 
     return (
       <>
