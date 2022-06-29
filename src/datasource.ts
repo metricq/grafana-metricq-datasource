@@ -93,10 +93,7 @@ export class MetricQDatasource extends DataSourceApi<MetricQQuery, MetricQDataSo
 
   async testDatasource() {
     return getBackendSrv()
-      .datasourceRequest({
-        url: this.url + '/',
-        method: 'GET',
-      })
+      .get(this.url + '/')
       .then((response) => {
         if (response.status === 200) {
           return { status: 'success', message: 'Data source is working' };
@@ -121,13 +118,15 @@ export class MetricQDatasource extends DataSourceApi<MetricQQuery, MetricQDataSo
   }
 
   async doRequest(url: string, method: string, options: any) {
-    return await getBackendSrv().datasourceRequest({
-      method: method,
-      url: url,
-      data: options,
-      withCredentials: this.withCredentials,
-      headers: this.headers,
-    });
+    return await getBackendSrv()
+      .fetch({
+        method: method,
+        url: url,
+        data: options,
+        withCredentials: this.withCredentials,
+        headers: this.headers,
+      })
+      .toPromise();
   }
 
   buildQueryParameters(options: DataQueryRequest<MetricQQuery>) {
