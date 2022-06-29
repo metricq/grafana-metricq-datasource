@@ -7,9 +7,10 @@ import {
   DataSourceInstanceSettings,
   FieldType,
   MutableDataFrame,
+  TIME_SERIES_TIME_FIELD_NAME,
 } from '@grafana/data';
 
-import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { FetchResponse, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { MetricQDataSourceOptions, MetricQQuery } from './types';
 import { MetricFindValue } from '@grafana/data/types/datasource';
@@ -38,15 +39,20 @@ export class MetricQDatasource extends DataSourceApi<MetricQQuery, MetricQDataSo
 
     query.targets = query.targets.filter((t: MetricQQuery) => !t.hide);
 
-    const data = await this.doRequest(this.url + '/query', 'POST', query).then((response: { data: any[] }) => {
+    const data = await this.doRequest(this.url + '/query_hta', 'POST', query).then((response: FetchResponse) => {
       return response.data.map((result: any) => {
+        let fields = [{ name: TIME_SERIES_TIME_FIELD_NAME, type: FieldType.time }];
+        if (result.mode === 'raw') {
+          fields.push({ name: 'raw', type: FieldType.number });
+        } else {
+          fields.push({ name: 'min', type: FieldType.number });
+          fields.push({ name: 'avg', type: FieldType.number });
+          fields.push({ name: 'max', type: FieldType.number });
+        }
         const frame = new MutableDataFrame({
           refId: result.refId,
-          name: result.target,
-          fields: [
-            { name: 'Time', type: FieldType.time },
-            { name: 'Value', type: FieldType.number },
-          ],
+          name: result.metric,
+          fields: fields,
           meta: {
             stats: [
               {
@@ -60,9 +66,15 @@ export class MetricQDatasource extends DataSourceApi<MetricQQuery, MetricQDataSo
             ],
           },
         });
-        result.datapoints.forEach((point: any) => {
-          frame.appendRow([point[1], point[0]]);
-        });
+        if (result.mode === 'raw') {
+          result.raw.forEach((point: any) => {
+            frame.appendRow([point.time, point.value]);
+          });
+        } else {
+          result.aggregates.forEach((point: any) => {
+            frame.appendRow([point.time, point.min, point.avg, point.max]);
+          });
+        }
 
         return frame;
       });
