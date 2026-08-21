@@ -1,7 +1,7 @@
 {
   "type": "datasource",
   "name": "MetricQ",
-  "id": "metricq-datasource",
+  "id": "metricq-metricq-datasource",
   "info": {
     "description": "MetricQ datasource plugin for Grafana",
     "author": { "name": "MetricQ" },
