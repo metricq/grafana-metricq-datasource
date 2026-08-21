@@ -2,13 +2,22 @@ const path = require('path');
 const fs = require('fs');
 const webpack = require('webpack');
 
-// Minimal plugin.json copy — avoids copy-webpack-plugin's broken ESM deps.
-class CopyPluginJson {
+// Minimal asset copy — avoids copy-webpack-plugin's broken ESM deps.
+class CopyPluginAssets {
   apply(compiler) {
-    compiler.hooks.afterEmit.tap('CopyPluginJson', () => {
-      const src = path.resolve(__dirname, 'src', 'plugin.json');
-      const dst = path.resolve(__dirname, 'dist', 'plugin.json');
-      fs.copyFileSync(src, dst);
+    compiler.hooks.afterEmit.tap('CopyPluginAssets', () => {
+      const dist = path.resolve(__dirname, 'dist');
+      const img = path.resolve(dist, 'img');
+
+      fs.mkdirSync(img, { recursive: true });
+      fs.copyFileSync(
+        path.resolve(__dirname, 'src', 'plugin.json'),
+        path.resolve(dist, 'plugin.json')
+      );
+      fs.copyFileSync(
+        path.resolve(__dirname, 'src', 'img', 'metricq.svg'),
+        path.resolve(img, 'metricq.svg')
+      );
     });
   }
 }
@@ -67,6 +76,6 @@ module.exports = {
   plugins: [
     // React global bereitstellen damit JSX (React.createElement) funktioniert
     new webpack.ProvidePlugin({ React: 'react' }),
-    new CopyPluginJson(),
+    new CopyPluginAssets(),
   ],
 };

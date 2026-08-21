@@ -6,6 +6,10 @@
     "description": "MetricQ datasource plugin for Grafana",
     "author": { "name": "MetricQ" },
     "keywords": ["metricq", "timeseries", "amqp"],
+    "logos": {
+      "small": "img/metricq.svg",
+      "large": "img/metricq.svg"
+    },
     "version": "1.0.0",
     "updated": "2026-01-01"
   },
