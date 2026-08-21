@@ -1,135 +1,202 @@
-import _ from 'lodash';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { DataSourceInstanceSettings, MetricFindValue, ScopedVars } from '@grafana/data';
+import { MetricQQuery, MetricQDataSourceOptions, defaultQuery } from './types';
 
-import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  FieldType,
-  MutableDataFrame,
-} from '@grafana/data';
+export interface SuggestValue {
+  value: string;
+  count: number;
+}
 
-import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
-
-import { MetricQDataSourceOptions, MetricQQuery } from './types';
-import { MetricFindValue } from '@grafana/data/types/datasource';
-
-export class MetricQDatasource extends DataSourceApi<MetricQQuery, MetricQDataSourceOptions> {
-  id: number;
+export interface MetricExplorerResult {
   name: string;
-  url?: string;
-  withCredentials?: boolean;
-  headers: any;
+  description?: string;
+  display_name?: string;
+}
 
+export interface MetricCountResult {
+  count: number;
+  interactive_limit: number;
+}
+
+/** Parses a Grafana-interpolated string value into a scalar or array.
+ *  "{v1,v2,v3}" → ["v1","v2","v3"],  "v1" → "v1",  sentinels → undefined
+ */
+function parseFilterValue(v: string): string | string[] | undefined {
+  if (v === '' || v === '*' || v === '$__all') {
+    return undefined;
+  }
+  if (v.startsWith('{') && v.endsWith('}')) {
+    const parts = v.slice(1, -1).split(',').map((s) => s.trim()).filter(Boolean);
+    return parts.length === 1 ? parts[0] : parts;
+  }
+  return v;
+}
+
+function asFilterValues(value: string | string[]): string[] {
+  return Array.isArray(value) ? value : [value];
+}
+
+function explicitMetrics(query: MetricQQuery): string[] {
+  const seen = new Set<string>();
+  const metrics: string[] = [];
+
+  const addMetric = (value?: string) => {
+    const trimmed = value?.trim();
+    if (!trimmed || seen.has(trimmed)) {
+      return;
+    }
+    seen.add(trimmed);
+    metrics.push(trimmed);
+  };
+
+  addMetric(query.metric);
+  for (const metric of Array.isArray(query.metrics) ? query.metrics : []) {
+    addMetric(metric);
+  }
+
+  return metrics;
+}
+
+export class MetricQDataSource extends DataSourceWithBackend<MetricQQuery, MetricQDataSourceOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<MetricQDataSourceOptions>) {
     super(instanceSettings);
-    this.name = instanceSettings.name;
-    this.id = instanceSettings.id;
-    this.url = instanceSettings.url;
-    this.withCredentials = instanceSettings.withCredentials;
-    this.headers = { 'Content-Type': 'application/json' };
-    if (typeof instanceSettings.basicAuth === 'string' && instanceSettings.basicAuth.length > 0) {
-      this.headers['Authorization'] = instanceSettings.basicAuth;
+  }
+
+  /**
+   * Interpolate dashboard variables before a request leaves the browser.
+   *
+   * The backend does not receive Grafana's dashboard-variable state, so doing
+   * this there would leave values such as "$system" literal.
+   */
+  private interpolateQuery(query: Partial<MetricQQuery>, scopedVars?: ScopedVars): MetricQQuery {
+    const srv = getTemplateSrv();
+    const interpolatedFilter: Record<string, string | string[]> = {};
+    for (const [k, v] of Object.entries(query.filter ?? {})) {
+      const values = asFilterValues(v);
+      const interpolatedValues = values.flatMap((value) => {
+        const parsed = parseFilterValue(srv.replace(value, scopedVars));
+        return parsed === undefined ? [] : asFilterValues(parsed);
+      });
+      if (interpolatedValues.length === 1) {
+        interpolatedFilter[k] = interpolatedValues[0];
+      } else if (interpolatedValues.length > 1) {
+        interpolatedFilter[k] = interpolatedValues;
+      }
+    }
+    return {
+      ...defaultQuery,
+      ...query,
+      metrics: explicitMetrics({
+        ...query,
+        metric: srv.replace(query.metric ?? '', scopedVars),
+        metrics: Array.isArray(query.metrics) ? query.metrics.map((metric) => srv.replace(metric ?? '', scopedVars)) : [],
+      }),
+      filter: interpolatedFilter,
+      search: srv.replace(query.search ?? '', scopedVars),
+      infix: srv.replace(query.infix ?? '', scopedVars),
+      selector: srv.replace(query.selector ?? '', scopedVars),
+    };
+  }
+
+  applyTemplateVariables(query: MetricQQuery, scopedVars: ScopedVars): MetricQQuery {
+    return this.interpolateQuery(query, scopedVars);
+  }
+
+  filterQuery(query: MetricQQuery): boolean {
+    const metrics = explicitMetrics(query);
+    return (
+      metrics.length > 0 ||
+      Object.keys(query.filter ?? {}).length > 0 ||
+      Boolean(query.search?.trim()) ||
+      Boolean(query.infix?.trim()) ||
+      Boolean(query.selector?.trim())
+    );
+  }
+
+  /**
+   * Supports variable queries of the form:
+   *   suggest:<field>
+   *   suggest:<field>:<json-filter>
+   *
+   * Examples:
+   *   suggest:asset_id
+   *   suggest:asset_id:{"metric_type":"power_factor"}
+   */
+  async metricFindQuery(query: string): Promise<MetricFindValue[]> {
+    const trimmed = getTemplateSrv().replace(query).trim();
+    if (!trimmed.startsWith('suggest:')) {
+      return [];
+    }
+    const rest = trimmed.slice('suggest:'.length);
+    const colonIdx = rest.indexOf(':');
+    const field = colonIdx === -1 ? rest : rest.slice(0, colonIdx);
+    let filter: Record<string, string | string[]> = {};
+    if (colonIdx !== -1) {
+      try {
+        const raw: Record<string, string> = JSON.parse(rest.slice(colonIdx + 1));
+        for (const [k, v] of Object.entries(raw)) {
+          const parsed = parseFilterValue(v);
+          if (parsed !== undefined) {
+            filter[k] = parsed;
+          }
+        }
+      } catch {
+        // ignore malformed filter
+      }
+    }
+    const values = await this.suggestValues(field, filter);
+    return values.map((v) => ({ text: v.value, value: v.value }));
+  }
+
+  /**
+   * Calls metrics.suggest for a field, optionally scoped by the current filter context.
+   * Returns values sorted by frequency (most common first).
+   */
+  async suggestValues(field: string, filter: Record<string, string | string[]> = {}): Promise<SuggestValue[]> {
+    try {
+      const result = await this.postResource(`suggest/${encodeURIComponent(field)}`, {
+        filter: this.interpolateQuery({ filter }).filter,
+      });
+      return Array.isArray(result?.values) ? result.values : [];
+    } catch {
+      return [];
     }
   }
 
-  async query(options: DataQueryRequest<MetricQQuery>): Promise<DataQueryResponse> {
-    let query = this.buildQueryParameters(options);
-
-    query.targets = query.targets.filter((t: MetricQQuery) => !t.hide);
-
-    const data = await this.doRequest(this.url + '/query', 'POST', query).then((response: { data: any[] }) => {
-      return response.data.map((result: any) => {
-        const frame = new MutableDataFrame({
-          refId: result.refId,
-          name: result.target,
-          fields: [
-            { name: 'Time', type: FieldType.time },
-            { name: 'Value', type: FieldType.number },
-          ],
-          meta: {
-            stats: [
-              {
-                displayName: 'time-measurements-db',
-                value: result.time_measurements.db,
-              },
-              {
-                displayName: 'time-measurements-http',
-                value: result.time_measurements.http,
-              },
-            ],
-          },
-        });
-        result.datapoints.forEach((point: any) => {
-          frame.appendRow([point[1], point[0]]);
-        });
-
-        return frame;
+  /** Returns up to 100 metric names matching the given infix substring. */
+  async suggestMetricNames(infix: string): Promise<string[]> {
+    try {
+      const result = await this.postResource('metric-names', {
+        infix: getTemplateSrv().replace(infix),
       });
-    });
-
-    return { data };
+      return Array.isArray(result) ? result : [];
+    } catch {
+      return [];
+    }
   }
 
-  async metricFindQuery(query: string): Promise<MetricFindValue[]> {
-    const interpolated = {
-      target: getTemplateSrv().replace(query, undefined, 'regex'),
-    };
-
-    return this.doRequest(this.url + '/search', 'POST', interpolated).then(this.mapToTextValue);
-  }
-
-  async testDatasource() {
-    return getBackendSrv()
-      .datasourceRequest({
-        url: this.url + '/',
-        method: 'GET',
-      })
-      .then((response) => {
-        if (response.status === 200) {
-          return { status: 'success', message: 'Data source is working' };
-        } else {
-          return {
-            status: 'failed',
-            message: response.status,
-          };
-        }
+  async searchMetrics(params: { infix?: string; selector?: string; search?: string }): Promise<MetricExplorerResult[]> {
+    try {
+      const result = await this.postResource('metric-explorer', {
+        infix: getTemplateSrv().replace(params.infix ?? ''),
+        selector: getTemplateSrv().replace(params.selector ?? ''),
+        search: getTemplateSrv().replace(params.search ?? ''),
       });
+      return Array.isArray(result) ? result : [];
+    } catch {
+      return [];
+    }
   }
 
-  mapToTextValue(result: any): MetricFindValue[] {
-    return _.map(result.data, (d, i) => {
-      if (d && d.text && d.value) {
-        return { text: d.text, value: d.value };
-      } else if (_.isObject(d)) {
-        return { text: d, value: i };
-      }
-      return { text: d, value: d };
-    });
-  }
-
-  async doRequest(url: string, method: string, options: any) {
-    return await getBackendSrv().datasourceRequest({
-      method: method,
-      url: url,
-      data: options,
-      withCredentials: this.withCredentials,
-      headers: this.headers,
-    });
-  }
-
-  buildQueryParameters(options: DataQueryRequest<MetricQQuery>) {
-    //remove placeholder targets
-    options.targets = _.filter(options.targets, (target: MetricQQuery) => {
-      return target.metric !== undefined;
-    });
-
-    options.targets = _.map(options.targets, (target: MetricQQuery) => {
-      target.name = getTemplateSrv().replace(target.name, options.scopedVars, 'regex');
-      target.metric = getTemplateSrv().replace(target.metric, options.scopedVars, 'regex');
-      return target;
-    });
-
-    return options;
+  async countMatchingMetrics(query: Partial<MetricQQuery>): Promise<MetricCountResult> {
+    try {
+      const result = await this.postResource('metric-count', this.interpolateQuery(query));
+      return {
+        count: Number(result?.count ?? 0),
+        interactive_limit: Number(result?.interactive_limit ?? 0),
+      };
+    } catch {
+      return { count: 0, interactive_limit: 0 };
+    }
   }
 }

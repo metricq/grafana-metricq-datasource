@@ -1,10 +1,11 @@
-import { MetricQDatasource } from './datasource';
-import { MetricQQueryEditor } from './QueryEditor';
-import { MetricQConfigEditor } from './ConfigEditor';
-
 import { DataSourcePlugin } from '@grafana/data';
-import { MetricQDataSourceOptions, MetricQQuery } from './types';
+import { MetricQDataSource } from './datasource';
+import { QueryEditor } from './components/QueryEditor';
+import { ConfigEditor } from './components/ConfigEditor';
+import { MetricQQuery, MetricQDataSourceOptions } from './types';
 
-export const plugin = new DataSourcePlugin<MetricQDatasource, MetricQQuery, MetricQDataSourceOptions>(MetricQDatasource)
-  .setConfigEditor(MetricQConfigEditor)
-  .setQueryEditor(MetricQQueryEditor);
+export const plugin = new DataSourcePlugin<MetricQDataSource, MetricQQuery, MetricQDataSourceOptions>(
+  MetricQDataSource
+)
+  .setConfigEditor(ConfigEditor)
+  .setQueryEditor(QueryEditor);

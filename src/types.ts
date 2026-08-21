@@ -1,26 +1,57 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
+/** Fields supported by metrics.resolve and metrics.suggest. */
+export const FILTERABLE_FIELDS = [
+  'site', 'room', 'rack', 'feed',
+  'asset_type', 'asset_id', 'location_code',
+  'scope', 'circuit', 'position', 'power_type', 'phase',
+  'service', 'team', 'criticality',
+  'system', 'cluster', 'metric_type',
+  'description', 'display_name', 'source'
+] as const;
+
+export type FilterableField = typeof FILTERABLE_FIELDS[number];
+
+/** Fields that support value suggestions (metrics.suggest). */
+export const SUGGESTABLE_FIELDS = FILTERABLE_FIELDS.filter(
+  (f) => f !== 'description' && f !== 'display_name'
+);
+
+export const GROUPABLE_FIELDS = FILTERABLE_FIELDS.filter(
+  (f) => f !== 'description' && f !== 'display_name'
+);
+
+export const AGGREGATION_OPTIONS = ['none', 'min', 'max', 'mean', 'sum'] as const;
+
+export type AggregationMode = typeof AGGREGATION_OPTIONS[number];
+
 export interface MetricQQuery extends DataQuery {
-  name?: string;
-  metric: string;
-  functions: string[];
-  smaWindow: string;
-  scalingFactor: number;
+  metric?: string; // legacy single-metric field for loading existing saved queries
+  metrics: string[];
+  filter: Record<string, string | string[]>;
+  search: string;
+  infix: string;
+  selector: string; // regex on metric name (mutually exclusive with infix)
+  groupBy?: string; // legacy field, interpreted as collapseBy when loading saved queries
+  collapseBy: string;
+  aggregateOver: string;
+  aggregate: AggregationMode;
 }
 
 export const defaultQuery: Partial<MetricQQuery> = {
-  metric: undefined,
-  functions: ['avg'],
-  smaWindow: '',
-  scalingFactor: 1,
+  metrics: [],
+  filter: {},
+  search: '',
+  infix: '',
+  selector: '',
+  collapseBy: '',
+  aggregateOver: '',
+  aggregate: 'none',
 };
 
-/**
- * These are options configured for each DataSource instance
- */
 export interface MetricQDataSourceOptions extends DataSourceJsonData {}
 
-/**
- * Value that is used in the backend, but never sent over HTTP to the frontend
- */
-export interface MetricQSecureJsonData {}
+export interface MetricQSecureJsonData {
+  /** Full AMQP URL including credentials, e.g. amqp://user:pass@host:5672/ */
+  server?: string;
+}
