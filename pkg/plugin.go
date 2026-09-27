@@ -37,6 +37,7 @@ type queryModel struct {
 	CollapseBy    string                 `json:"collapseBy"`
 	AggregateOver string                 `json:"aggregateOver"`
 	Aggregate     string                 `json:"aggregate"`
+	Statistics    []string               `json:"statistics"`
 }
 
 // ── datasource instance ───────────────────────────────────────────────────────
@@ -237,7 +238,38 @@ func resolveExplicitMetricSelection(explicit []string) map[string]map[string]str
 }
 
 func extractTimelinePoints(from, to time.Time, result metricq.TimelineResult) map[time.Time]float64 {
-	points := make(map[time.Time]float64)
+	return extractTimelineStatistics(from, to, result, []string{"mean"})["mean"]
+}
+
+var historyStatisticNames = []string{"mean", "min", "max", "count"}
+
+func selectedHistoryStatistics(requested []string) []string {
+	valid := make(map[string]bool, len(historyStatisticNames))
+	for _, name := range historyStatisticNames {
+		valid[name] = true
+	}
+
+	selected := make([]string, 0, len(requested))
+	seen := make(map[string]bool, len(requested))
+	for _, raw := range requested {
+		name := strings.ToLower(strings.TrimSpace(raw))
+		if valid[name] && !seen[name] {
+			selected = append(selected, name)
+			seen[name] = true
+		}
+	}
+	if len(selected) == 0 {
+		return []string{"mean"}
+	}
+	return selected
+}
+
+func extractTimelineStatistics(from, to time.Time, result metricq.TimelineResult, requested []string) map[string]map[time.Time]float64 {
+	statistics := selectedHistoryStatistics(requested)
+	points := make(map[string]map[time.Time]float64, len(statistics))
+	for _, statistic := range statistics {
+		points[statistic] = make(map[time.Time]float64)
+	}
 
 	inRange := func(t time.Time) bool {
 		if from.IsZero() && to.IsZero() {
@@ -252,16 +284,33 @@ func extractTimelinePoints(from, to time.Time, result metricq.TimelineResult) ma
 			if !inRange(t) {
 				continue
 			}
-			value := 0.0
-			if mean, err := agg.Mean(); err == nil {
-				value = mean
+			for _, statistic := range statistics {
+				switch statistic {
+				case "mean":
+					value := 0.0
+					if mean, err := agg.Mean(); err == nil {
+						value = mean
+					}
+					points[statistic][t] = value
+				case "min":
+					points[statistic][t] = agg.GetMinimum()
+				case "max":
+					points[statistic][t] = agg.GetMaximum()
+				case "count":
+					points[statistic][t] = float64(agg.GetCount())
+				}
 			}
-			points[t] = value
 		}
 	case *metricq.TimelineValues:
 		for t, v := range r.All() {
 			if inRange(t) {
-				points[t] = v
+				for _, statistic := range statistics {
+					if statistic == "count" {
+						points[statistic][t] = 1
+					} else {
+						points[statistic][t] = v
+					}
+				}
 			}
 		}
 	}
@@ -373,29 +422,88 @@ func aggregateIntervalPoints(series []metricSeries, mode string) map[time.Time]f
 }
 
 func buildFrameFromPoints(name string, labels data.Labels, metadata map[string]string, points map[time.Time]float64) backend.DataResponse {
-	frame := data.NewFrame(name)
+	return buildFrameFromStatistics(name, labels, metadata, map[string]map[time.Time]float64{"mean": points}, []string{"mean"})
+}
 
-	fieldConfig := &data.FieldConfig{
-		DisplayName: name,
-		Description: metadata["description"],
-		Unit:        metricqUnitToGrafana(metadata["unit"]),
+var statisticColorFamilies = [][]string{
+	{"#5794F2", "#8AB8FF", "#3274D9", "#B4D2FF"},
+	{"#73BF69", "#A5D99D", "#37872D", "#C9E8C5"},
+	{"#FF9830", "#FFC078", "#E0752D", "#FFD7A8"},
+	{"#B877D9", "#D6A7EE", "#8F3BB8", "#E8CCF5"},
+	{"#F2495C", "#FF8A98", "#C4162A", "#FFBAC2"},
+	{"#2D9D9A", "#70C9C6", "#1F7875", "#A8E1DF"},
+}
+
+func statisticColor(metric, statistic string) string {
+	hash := uint32(2166136261)
+	for _, char := range []byte(metric) {
+		hash ^= uint32(char)
+		hash *= 16777619
 	}
+	family := statisticColorFamilies[int(hash%uint32(len(statisticColorFamilies)))]
+	for index, name := range historyStatisticNames {
+		if name == statistic {
+			return family[index]
+		}
+	}
+	return family[0]
+}
 
-	times := make([]time.Time, 0, len(points))
-	for t := range points {
+func buildFrameFromStatistics(name string, labels data.Labels, metadata map[string]string, points map[string]map[time.Time]float64, requested []string) backend.DataResponse {
+	frame := data.NewFrame(name)
+	statistics := selectedHistoryStatistics(requested)
+
+	allTimes := make(map[time.Time]struct{})
+	for _, statistic := range statistics {
+		for t := range points[statistic] {
+			allTimes[t] = struct{}{}
+		}
+	}
+	times := make([]time.Time, 0, len(allTimes))
+	for t := range allTimes {
 		times = append(times, t)
 	}
 	sort.Slice(times, func(i, j int) bool { return times[i].Before(times[j]) })
 
-	values := make([]float64, 0, len(times))
-	for _, t := range times {
-		values = append(values, points[t])
-	}
-
 	timeField := data.NewField("time", nil, times)
-	valField := data.NewField("value", labels, values)
-	valField.Config = fieldConfig
-	frame.Fields = append(frame.Fields, timeField, valField)
+	frame.Fields = append(frame.Fields, timeField)
+	for _, statistic := range statistics {
+		values := make([]float64, 0, len(times))
+		for _, t := range times {
+			values = append(values, points[statistic][t])
+		}
+
+		displayName := name
+		if len(statistics) > 1 || statistic != "mean" {
+			displayName = fmt.Sprintf("%s %s", name, statistic)
+		}
+		unit := metricqUnitToGrafana(metadata["unit"])
+		if statistic == "count" {
+			unit = "short"
+		}
+		fieldName := statistic
+		if len(statistics) == 1 && statistic == "mean" {
+			fieldName = "value"
+		}
+		fieldLabels := labels.Copy()
+		if len(statistics) > 1 {
+			fieldLabels["statistic"] = statistic
+		}
+		field := data.NewField(fieldName, fieldLabels, values)
+		fieldConfig := &data.FieldConfig{
+			DisplayNameFromDS: displayName,
+			Description:       metadata["description"],
+			Unit:              unit,
+		}
+		if len(statistics) > 1 {
+			fieldConfig.Color = map[string]interface{}{
+				"mode":       "fixed",
+				"fixedColor": statisticColor(name, statistic),
+			}
+		}
+		field.Config = fieldConfig
+		frame.Fields = append(frame.Fields, field)
+	}
 
 	return backend.DataResponse{Frames: data.Frames{frame}}
 }
@@ -647,10 +755,11 @@ func appendNoticeToFrames(frames data.Frames, notice *data.Notice) {
 }
 
 type metricSeries struct {
-	metric   string
-	metadata map[string]string
-	labels   data.Labels
-	points   map[time.Time]float64
+	metric     string
+	metadata   map[string]string
+	labels     data.Labels
+	points     map[time.Time]float64
+	statistics map[string]map[time.Time]float64
 }
 
 func (d *datasourceInstance) resolveMetricsByNamePattern(ctx context.Context, infix, selector string) (map[string]map[string]string, error) {
@@ -802,6 +911,7 @@ func (d *datasourceInstance) runQuery(ctx context.Context, q backend.DataQuery, 
 		})
 	}
 
+	requestedStatistics := selectedHistoryStatistics(model.Statistics)
 	results := make([]metricSeries, len(infos))
 	var wg sync.WaitGroup
 	for i, info := range infos {
@@ -816,11 +926,13 @@ func (d *datasourceInstance) runQuery(ctx context.Context, q backend.DataQuery, 
 				log.DefaultLogger.Warn("MetricQ query failed", "metric", info.metric, "err", histErr)
 				return
 			}
+			statistics := extractTimelineStatistics(q.TimeRange.From, q.TimeRange.To, timelineResp, requestedStatistics)
 			results[idx] = metricSeries{
-				metric:   info.metric,
-				metadata: info.metadata,
-				labels:   info.labels,
-				points:   extractTimelinePoints(q.TimeRange.From, q.TimeRange.To, timelineResp),
+				metric:     info.metric,
+				metadata:   info.metadata,
+				labels:     info.labels,
+				points:     extractTimelinePoints(q.TimeRange.From, q.TimeRange.To, timelineResp),
+				statistics: statistics,
 			}
 		}(i, info)
 	}
@@ -859,7 +971,7 @@ func (d *datasourceInstance) runQuery(ctx context.Context, q backend.DataQuery, 
 		if result.metric == "" {
 			continue
 		}
-		frames = append(frames, buildFrameFromPoints(result.metric, result.labels, result.metadata, result.points).Frames...)
+		frames = append(frames, buildFrameFromStatistics(result.metric, result.labels, result.metadata, result.statistics, requestedStatistics).Frames...)
 	}
 	appendNoticeToFrames(frames, previewNotice)
 

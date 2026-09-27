@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { AsyncSelect, Button, getTagColorsFromName, Input, Modal, RadioButtonGroup, Select } from '@grafana/ui';
+import { AsyncSelect, Button, Checkbox, getTagColorsFromName, Input, Modal, RadioButtonGroup, Select } from '@grafana/ui';
 import { MetricExplorerResult, MetricQDataSource } from '../datasource';
 import {
   MetricQDataSourceOptions,
@@ -10,6 +10,8 @@ import {
   SUGGESTABLE_FIELDS,
   GROUPABLE_FIELDS,
   AGGREGATION_OPTIONS,
+  HISTORY_STATISTIC_OPTIONS,
+  HistoryStatistic,
   defaultQuery,
 } from '../types';
 
@@ -133,6 +135,14 @@ export function QueryEditor({ query, onChange, onRunQuery, datasource }: Props) 
   const collapseBy = q.collapseBy ?? q.groupBy ?? '';
   const aggregateOver = q.aggregateOver ?? '';
   const aggregate = q.aggregate ?? 'none';
+  const statistics = useMemo<HistoryStatistic[]>(() => {
+    const selected = Array.isArray(q.statistics)
+      ? q.statistics.filter((value): value is HistoryStatistic =>
+          (HISTORY_STATISTIC_OPTIONS as readonly string[]).includes(value)
+        )
+      : [];
+    return selected.length > 0 ? Array.from(new Set(selected)) : ['mean'];
+  }, [q.statistics]);
 
   const [isAdding, setIsAdding] = useState(false);
   const [addField, setAddField] = useState('');
@@ -338,6 +348,7 @@ export function QueryEditor({ query, onChange, onRunQuery, datasource }: Props) 
       collapseBy: '',
       aggregateOver: '',
       aggregate: 'none',
+      statistics: ['mean'],
     });
     setIsAdding(false);
     setAddField('');
@@ -451,6 +462,33 @@ export function QueryEditor({ query, onChange, onRunQuery, datasource }: Props) 
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', minHeight: 28 }}>
         {activeTokens.length > 0 ? activeTokens : <div style={{ fontSize: 12, opacity: 0.55 }}>No active filters or explicit metrics.</div>}
+      </div>
+
+      <div style={{ display: 'grid', gap: 8 }}>
+        <div style={sectionLabelStyle}>History values</div>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+          {HISTORY_STATISTIC_OPTIONS.map((statistic) => (
+            <Checkbox
+              key={statistic}
+              label={statistic}
+              value={statistics.includes(statistic)}
+              disabled={Boolean(collapseBy || aggregateOver)}
+              onChange={(event) => {
+                const next = event.currentTarget.checked
+                  ? [...statistics, statistic]
+                  : statistics.filter((value) => value !== statistic);
+                if (next.length > 0) {
+                  applyQuery({ ...q, statistics: next });
+                }
+              }}
+            />
+          ))}
+        </div>
+        <div style={{ fontSize: 12, opacity: 0.6 }}>
+          {collapseBy || aggregateOver
+            ? 'History values apply to individual metrics and are unavailable while metrics are collapsed or aggregated.'
+            : 'Values from the same MetricQ history interval share labels and use related colors. Count is displayed without the metric unit.'}
+        </div>
       </div>
 
       <div style={{ display: 'grid', gap: 8 }}>

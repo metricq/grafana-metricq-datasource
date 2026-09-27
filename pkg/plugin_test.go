@@ -68,6 +68,80 @@ func TestBuildDataResponse_Aggregates(t *testing.T) {
 	}
 }
 
+func TestExtractTimelineStatistics_Aggregates(t *testing.T) {
+	t0 := time.Unix(1_700_000_000, 0)
+	result := &metricq.TimelineAggregates{
+		Times: []time.Time{t0},
+		Agg: []*metricq.HistoryResponse_Aggregate{{
+			Minimum:    1,
+			Maximum:    5,
+			Sum:        9,
+			Count:      3,
+			Integral:   180,
+			ActiveTime: 60,
+		}},
+	}
+
+	got := extractTimelineStatistics(time.Time{}, time.Time{}, result, []string{"mean", "min", "max", "count"})
+	want := map[string]float64{"mean": 3, "min": 1, "max": 5, "count": 3}
+	for statistic, wantValue := range want {
+		if gotValue := got[statistic][t0]; gotValue != wantValue {
+			t.Errorf("%s: want %v, got %v", statistic, wantValue, gotValue)
+		}
+	}
+}
+
+func TestExtractTimelineStatistics_RawValues(t *testing.T) {
+	t0 := time.Unix(1_700_000_000, 0)
+	result := &metricq.TimelineValues{Times: []time.Time{t0}, Values: []float64{4.5}}
+
+	got := extractTimelineStatistics(time.Time{}, time.Time{}, result, []string{"mean", "min", "max", "count"})
+	want := map[string]float64{"mean": 4.5, "min": 4.5, "max": 4.5, "count": 1}
+	for statistic, wantValue := range want {
+		if gotValue := got[statistic][t0]; gotValue != wantValue {
+			t.Errorf("%s: want %v, got %v", statistic, wantValue, gotValue)
+		}
+	}
+}
+
+func TestBuildFrameFromStatistics_CouplesFields(t *testing.T) {
+	t0 := time.Unix(1_700_000_000, 0)
+	statistics := []string{"mean", "min", "max", "count"}
+	points := map[string]map[time.Time]float64{
+		"mean":  {t0: 3},
+		"min":   {t0: 1},
+		"max":   {t0: 5},
+		"count": {t0: 7},
+	}
+
+	response := buildFrameFromStatistics("power", data.Labels{"phase": "L1"}, map[string]string{"unit": "W"}, points, statistics)
+	frame := response.Frames[0]
+	if len(frame.Fields) != 5 {
+		t.Fatalf("expected time plus four statistic fields, got %d fields", len(frame.Fields))
+	}
+	for index, statistic := range statistics {
+		field := frame.Fields[index+1]
+		if field.Name != statistic {
+			t.Errorf("field %d: want name %q, got %q", index+1, statistic, field.Name)
+		}
+		if field.Labels["phase"] != "L1" {
+			t.Errorf("field %s lost shared labels", statistic)
+		}
+		if field.Labels["statistic"] != statistic {
+			t.Errorf("field %s has statistic label %q", statistic, field.Labels["statistic"])
+		}
+		if field.Config.Color["mode"] != "fixed" || field.Config.Color["fixedColor"] == "" {
+			t.Errorf("field %s has no fixed family color", statistic)
+		}
+	}
+	if frame.Fields[1].Config.Unit != "watt" {
+		t.Errorf("mean unit: want watt, got %q", frame.Fields[1].Config.Unit)
+	}
+	if frame.Fields[4].Config.Unit != "short" {
+		t.Errorf("count unit: want short, got %q", frame.Fields[4].Config.Unit)
+	}
+}
+
 func TestBuildDataResponse_AggregateZeroActiveTime(t *testing.T) {
 	// ActiveTime=0 → Mean() returns error → value stays 0
 	result := &metricq.TimelineAggregates{

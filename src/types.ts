@@ -25,6 +25,10 @@ export const AGGREGATION_OPTIONS = ['none', 'min', 'max', 'mean', 'sum'] as cons
 
 export type AggregationMode = typeof AGGREGATION_OPTIONS[number];
 
+export const HISTORY_STATISTIC_OPTIONS = ['mean', 'min', 'max', 'count'] as const;
+
+export type HistoryStatistic = typeof HISTORY_STATISTIC_OPTIONS[number];
+
 export interface MetricQQuery extends DataQuery {
   metric?: string; // legacy single-metric field for loading existing saved queries
   metrics: string[];
@@ -36,6 +40,7 @@ export interface MetricQQuery extends DataQuery {
   collapseBy: string;
   aggregateOver: string;
   aggregate: AggregationMode;
+  statistics: HistoryStatistic[];
 }
 
 export const defaultQuery: Partial<MetricQQuery> = {
@@ -47,6 +52,7 @@ export const defaultQuery: Partial<MetricQQuery> = {
   collapseBy: '',
   aggregateOver: '',
   aggregate: 'none',
+  statistics: ['mean'],
 };
 
 export interface MetricQDataSourceOptions extends DataSourceJsonData {}
